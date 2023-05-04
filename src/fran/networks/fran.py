@@ -109,11 +109,10 @@ class Fran(nn.Module):
             self.downs.append(Down(in_dim, out_dim))
 
         for idx, in_dim in enumerate(reversed(dims)):
-            if idx == 0:
-                in_dim *= 2
+            in_dim *= 2
             out_dim = in_dim // 2
             if idx == len(dims)-1:
-                self.ups.append(Up(in_dim, out_dim*2, bilinear))
+                self.ups.append(Up(in_dim, out_dim, bilinear))
             else:
                 self.ups.append(Up(in_dim, out_dim//factor, bilinear))
             
