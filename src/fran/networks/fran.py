@@ -116,29 +116,27 @@ class Fran(nn.Module):
             else:
                 self.ups.append(Up(in_dim, out_dim//factor, bilinear))
             
-
-        self.outc = (OutConv(64, 3))
+        #RGB for 3
+        self.outc = (OutConv(dim, 3))
 
     def forward(self, x):
 
+        image = x[:, :3, :, :]
         down_hiddens = []
-        print("input : ", x.shape)
         x = self.inc(x)
-        print("conv1 : ", x.shape)
 
         down_hiddens.append(x)
         for down_block in self.downs:
             x = down_block(x)
-            print("down : ", x.shape)
 
             down_hiddens.append(x)
         last = down_hiddens.pop()
-        print("last : ", last.shape)
         for up_block in self.ups:
             skip_feature = down_hiddens.pop()
             x = up_block(x, skip_feature)
-            print("up : ", x.shape, skip_feature.shape)
 
-        image = self.outc(x)
+        delta = self.outc(x)
 
-        return image
+        reaged_image = image + delta
+
+        return reaged_image
