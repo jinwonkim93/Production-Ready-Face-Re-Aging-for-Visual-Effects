@@ -1,9 +1,28 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from .network.iresnet import iresnet100
+from .networks.iresnet import iresnet100
 import lpips
 
+
+class ReAgingLoss:
+    def __init__(self, l1_ratio=1.0, perceptual_ratio=1.0, adversarial_ratio=0.05):
+        
+        self.l1_ratio = l1_ratio
+        self.l1_fn = torch.nn.L1Loss()
+
+        self.perceptual_ratio = perceptual_ratio
+        self.perceptual_fn = lpips.LPIPS(net='vgg')
+
+        self.adversarial_ratio = adversarial_ratio
+        self.adversarial_fn = MultiScaleGANLoss()
+    
+    def __call__(self, pred, label, target_is_real):
+        l1_loss = self.l1_ratio * self.l1_fn(pred, label) 
+        perceptual_loss = self.perceptual_ratio * torch.mean(self.perceptual_fn(pred, label))
+        adversarial_loss = self.adversarial_ratio * self.adversarial_fn(pred, target_is_real)
+
+        return l1_loss + perceptual_loss + adversarial_loss
 
 class MultiScaleGANLoss(nn.Module):
     def __init__(self, gan_mode='hinge', target_real_label=1.0, target_fake_label=0.0,
